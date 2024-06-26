@@ -4,16 +4,18 @@ const mysql = require('mysql');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
+require('dotenv').config();
+
 const app = express();
 const otpStorage = {};
-const port = 3002;
+const port = process.env.PORT || 3002;
 
 // Configuración de la conexión a la base de datos MySQL
 const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'xcoring'
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
 });
 
 // Conexión a la base de datos
@@ -52,8 +54,8 @@ app.post('/login', (req, res) => {
 const transporter = nodemailer.createTransport({
   service: 'Gmail',
   auth: {
-    user: 'germanpalomino.21@gmail.com',
-    pass: 'uvzzbqtiphzrmjxq'
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
   }
 });
 
@@ -63,7 +65,7 @@ app.post('/password-recovery', (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000);
   otpStorage[email] = parseInt(otp);
   const mailOptions = {
-    from: 'germanpalomino.21@gmail.com',
+    from: process.env.EMAIL_USER,
     to: email,
     subject: 'Recuperación de contraseña',
     text: `Tu código para recuperar tu contraseña es: ${otp}`
