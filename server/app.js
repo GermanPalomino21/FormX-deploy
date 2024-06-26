@@ -7,42 +7,17 @@ const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
 const app = express();
-const otpStorage = {};
 const port = process.env.PORT || 3002;
+const otpStorage = {};
 
-// Función para crear la conexión a MySQL
-function createConnection() {
-  const connection = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
-  });
-
-  // Manejar error de conexión
-  connection.connect((err) => {
-    if (err) {
-      console.error('Error de conexión a la base de datos:', err);
-      setTimeout(createConnection, 2000); // Reintentar la conexión después de 2 segundos
-    } else {
-      console.log('Conexión a la base de datos MySQL establecida');
-    }
-  });
-
-  // Manejar errores de la conexión
-  connection.on('error', (err) => {
-    if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-      console.error('Conexión a la base de datos perdida:', err);
-      createConnection(); // Reintentar la conexión
-    } else {
-      throw err;
-    }
-  });
-
-  return connection;
-}
-
-const connection = createConnection();
+// Configuración del pool de conexiones
+const pool = mysql.createPool({
+  connectionLimit: 10,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
+});
 
 // Habilita CORS para todas las solicitudes
 app.use(cors());
@@ -54,7 +29,7 @@ app.use(bodyParser.json());
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
   const query = 'SELECT * FROM usuario WHERE email_usuario = ? AND pss_usuario = ?';
-  connection.query(query, [email, password], (error, results) => {
+  pool.query(query, [email, password], (error, results) => {
     if (error) {
       console.error('Error al verificar las credenciales del usuario:', error);
       return res.status(500).json({ error: 'Error al verificar las credenciales del usuario' });
@@ -102,7 +77,7 @@ app.post('/password-recovery', (req, res) => {
 app.get('/verificar-correo', (req, res) => {
   const { email } = req.query;
   const query = 'SELECT COUNT(*) AS count FROM usuario WHERE email_usuario = ?';
-  connection.query(query, [email], (error, results) => {
+  pool.query(query, [email], (error, results) => {
     if (error) {
       console.error('Error al verificar el correo electrónico:', error);
       return res.status(500).json({ error: 'Error al verificar el correo electrónico' });
@@ -127,7 +102,7 @@ app.post('/verify-otp', (req, res) => {
 app.post('/reset-password', (req, res) => {
   const { email, password } = req.body;
   const query = 'UPDATE usuario SET pss_usuario = ? WHERE email_usuario = ?';
-  connection.query(query, [password, email], (error, results) => {
+  pool.query(query, [password, email], (error, results) => {
     if (error) {
       console.error('Error al actualizar la contraseña:', error);
       return res.status(500).json({ error: 'Error al actualizar la contraseña' });
@@ -142,7 +117,7 @@ app.get('/evaluaciones/:id_usuario', (req, res) => {
 
   // Obtener el rol asociado y el proyecto del usuario
   const queryRolProyecto = 'SELECT id_rol, id_proyecto FROM usuario WHERE id_usuario = ?';
-  connection.query(queryRolProyecto, [id_usuario], (error, results) => {
+  pool.query(queryRolProyecto, [id_usuario], (error, results) => {
     if (error) {
       console.error('Error al obtener el rol y proyecto del usuario:', error);
       return res.status(500).json({ error: 'Error al obtener el rol y proyecto del usuario' });
@@ -157,7 +132,7 @@ app.get('/evaluaciones/:id_usuario', (req, res) => {
 
     // Obtener las categorías relacionadas con el rol y el proyecto
     const queryCategorias = 'SELECT id_categoria, nombre_categoria, descripcion_categoria, peso_categoria FROM categoria WHERE id_rol = ? AND id_proyecto = ?';
-    connection.query(queryCategorias, [id_rol, id_proyecto], (error, resultsCategorias) => {
+    pool.query(queryCategorias, [id_rol, id_proyecto], (error, resultsCategorias) => {
       if (error) {
         console.error('Error al obtener las categorías:', error);
         return res.status(500).json({ error: 'Error al obtener las categorías' });
@@ -200,7 +175,7 @@ app.get('/evaluaciones/:id_usuario', (req, res) => {
         WHERE 
           e.id_usuario = ? AND cat.id_rol = ? AND cat.id_proyecto = ?`;
 
-      connection.query(queryEvaluaciones, [id_usuario, id_rol, id_proyecto], (error, resultsEvaluaciones) => {
+      pool.query(queryEvaluaciones, [id_usuario, id_rol, id_proyecto], (error, resultsEvaluaciones) => {
         if (error) {
           console.error('Error en la consulta de evaluaciones:', error);
           return res.status(500).json({ error: 'Error en la consulta de evaluaciones', details: error });
@@ -276,7 +251,7 @@ app.put('/actualizar-calificaciones', (req, res) => {
       const values = [calificacion, id_proveedor, id_criterio, id_usuario];
       
       queries.push(new Promise((resolve, reject) => {
-        connection.query(query, values, (error, results) => {
+        pool.query(query, values, (error, results) => {
           if (error) {
             console.error('Error al actualizar la calificación:', error);
             reject(error);
