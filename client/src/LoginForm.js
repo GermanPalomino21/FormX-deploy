@@ -9,6 +9,7 @@ function LoginForm({ onLoginSuccess, onPasswordRecoveryRequest }) {
   const [password, setPassword] = useState('');
   const [showPasswordRecovery, setShowPasswordRecovery] = useState(false);
   const { reload, triggerReload } = useReload();
+  const apiUrl = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     if (reload) {
@@ -21,7 +22,7 @@ function LoginForm({ onLoginSuccess, onPasswordRecoveryRequest }) {
     const encryptedPassword = encryptString(password);
     console.log("Encrypted Password:", encryptedPassword);
 
-    fetch('http://localhost:3002/login', {
+    fetch(`${apiUrl}/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

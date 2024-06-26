@@ -11,9 +11,11 @@ function EvaluationForm() {
   const [error, setError] = useState('');
   const idUsuario = localStorage.getItem('id_usuario');
 
+  const apiUrl = process.env.REACT_APP_API_URL;
+
   useEffect(() => {
     if (idUsuario) {
-      fetch(`http://localhost:3002/evaluaciones/${idUsuario}`)
+      fetch(`${apiUrl}/evaluaciones/${idUsuario}`)
         .then(response => response.json())
         .then(data => {
           if (data.error) {
@@ -31,7 +33,7 @@ function EvaluationForm() {
           setLoading(false);
         });
     }
-  }, [idUsuario]);
+  }, [idUsuario, apiUrl]);
 
   const handleNextPage = () => {
     if (currentPage > 0) {
@@ -76,7 +78,7 @@ function EvaluationForm() {
       })),
     }));
 
-    fetch('http://localhost:3002/actualizar-calificaciones', {
+    fetch(`${apiUrl}/actualizar-calificaciones`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

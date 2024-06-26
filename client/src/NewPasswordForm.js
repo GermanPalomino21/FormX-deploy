@@ -10,6 +10,7 @@ function NewPasswordForm({ email, onPasswordUpdated }) {
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [error, setError] = useState('');
   const { triggerReload } = useReload(); // Usa el contexto de recarga
+  const apiUrl = process.env.REACT_APP_API_URL;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -21,7 +22,7 @@ function NewPasswordForm({ email, onPasswordUpdated }) {
 
     const encryptedPassword = encryptString(password);
 
-    fetch('http://localhost:3002/reset-password', {
+    fetch(`${apiUrl}/reset-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

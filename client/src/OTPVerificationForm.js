@@ -6,6 +6,7 @@ function OTPVerificationForm({ email, onNewPasswordRequest, onPasswordUpdated })
     const [otp, setOtp] = useState('');
     const [error, setError] = useState('');
     const [showNewPasswordForm, setShowNewPasswordForm] = useState(false);
+    const apiUrl = process.env.REACT_APP_API_URL;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -18,7 +19,7 @@ function OTPVerificationForm({ email, onNewPasswordRequest, onPasswordUpdated })
         }
 
         try {
-            const response = await fetch('http://localhost:3002/verify-otp', {
+            const response = await fetch(`${apiUrl}/verify-otp`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

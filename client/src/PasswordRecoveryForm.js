@@ -6,17 +6,18 @@ function PasswordRecoveryForm({ onNewPasswordRequest,onPasswordUpdated }) {
     const [email, setEmail] = useState('');
     const [showOTPVerificationForm, setShowOTPVerificationForm] = useState(false); 
     const [error, setError] = useState('');
+    const apiUrl = process.env.REACT_APP_API_URL;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             console.log('Datos a enviar:', { email });
             // Verificar si el correo existe en la base de datos
-            const response = await fetch(`http://localhost:3002/verificar-correo?email=${email}`);
+            const response = await fetch(`${apiUrl}/verificar-correo?email=${email}`);
             const data = await response.json();
             if (data.exists) {
                 // Si el correo existe, enviar solicitud de recuperación de contraseña
-                const recoveryResponse = await fetch('http://localhost:3002/password-recovery', {
+                const recoveryResponse = await fetch(`${apiUrl}/password-recovery`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
