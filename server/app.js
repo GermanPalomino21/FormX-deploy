@@ -10,22 +10,39 @@ const app = express();
 const otpStorage = {};
 const port = process.env.PORT || 3002;
 
-// Configuración de la conexión a la base de datos MySQL
-const connection = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
-});
+// Función para crear la conexión a MySQL
+function createConnection() {
+  const connection = mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
+  });
 
-// Conexión a la base de datos
-connection.connect((err) => {
-  if (err) {
-    console.error('Error de conexión a la base de datos:', err);
-    return;
-  }
-  console.log('Conexión a la base de datos MySQL establecida');
-});
+  // Manejar error de conexión
+  connection.connect((err) => {
+    if (err) {
+      console.error('Error de conexión a la base de datos:', err);
+      setTimeout(createConnection, 2000); // Reintentar la conexión después de 2 segundos
+    } else {
+      console.log('Conexión a la base de datos MySQL establecida');
+    }
+  });
+
+  // Manejar errores de la conexión
+  connection.on('error', (err) => {
+    if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+      console.error('Conexión a la base de datos perdida:', err);
+      createConnection(); // Reintentar la conexión
+    } else {
+      throw err;
+    }
+  });
+
+  return connection;
+}
+
+const connection = createConnection();
 
 // Habilita CORS para todas las solicitudes
 app.use(cors());
